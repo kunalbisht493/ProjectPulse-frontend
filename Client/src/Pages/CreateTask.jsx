@@ -13,7 +13,7 @@ function CreateTask() {
     const { projectId } = useParams();
     const searchRef = useRef(null);
     const suggestionsRef = useRef(null);
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     // Close suggestions when clicking outside
     useEffect(() => {

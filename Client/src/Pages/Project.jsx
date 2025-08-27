@@ -14,7 +14,7 @@ function Project() {
     const [userRole, setUserRole] = useState(null);
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
         const fetchUserData = async () => {

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 const socket = io("http://localhost:4000");
-const baseUrl = process.env.REACT_APP_API_URL;
+const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function Notification() {
     const token = localStorage.getItem("token");

@@ -11,7 +11,7 @@ function TrashProject() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
         const checkRoleAndFetchTrash = async () => {

@@ -9,7 +9,7 @@ function TaskCard({ task, setTasks, dragHandleProps = {}, isDragging = false, is
     const [showCommentModal, setShowCommentModal] = useState(false);
     const [commentCount, setCommentCount] = useState(0);
     const token = localStorage.getItem('token');
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     // Fetch comment count on component mount
     useEffect(() => {

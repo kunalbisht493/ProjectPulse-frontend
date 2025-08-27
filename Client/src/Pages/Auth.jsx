@@ -12,7 +12,7 @@ function Auth({ setIsLoggedIn }) {
     const { userData, setUserData, isSignUp, setIsSignUp } = useContext(AppContext);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });

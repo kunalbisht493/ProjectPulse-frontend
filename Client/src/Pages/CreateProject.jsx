@@ -15,7 +15,7 @@ function CreateProject({ onClose }) {
     const searchRef = useRef(null);
     const suggestionsRef = useRef(null);
     const navigate = useNavigate();
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     // Close suggestions when clicking outside
     useEffect(() => {

@@ -30,7 +30,7 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
     const { isOver, setNodeRef } = useDroppable({
         id: status,
     });
-    const baseUrl = process.env.REACT_APP_API_URL;
+  
     return (
         <div
             className={`${bgGradient} rounded-2xl border ${borderColor} overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 ${isOver ? 'ring-2 ring-blue-400/40' : ''}`}
@@ -107,6 +107,7 @@ function Task() {
     const [activeTask, setActiveTask] = useState(null);
 
     const token = localStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     const sensors = useSensors(
         useSensor(PointerSensor, {

@@ -11,7 +11,7 @@ export default function Comment({ isOpen, onClose, task, onCommentAdded }) {
     const [deletingId, setDeletingId] = useState(null);
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('userName');
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
         if (isOpen && task) {

@@ -18,7 +18,7 @@ import Loader from '../Components/Loader';
 const Dashboard = () => {
   // Get data from your existing context
   const { projectDetails, setProjectDetails, currentUser, setCurrentUser } = useContext(AppContext);
-  const baseUrl = process.env.REACT_APP_API_URL;
+  const baseUrl = import.meta.env.VITE_API_URL;
 
   // State management
   const [users, setUsers] = useState([]);
