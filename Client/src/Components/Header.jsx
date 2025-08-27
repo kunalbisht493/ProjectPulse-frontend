@@ -10,7 +10,6 @@ function Header({ setIsLoggedIn }) {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("userName")
-        localStorage.removeItem()
         setIsLoggedIn(false)
         showSuccess("Logout Successfully")
         navigate('/auth')
