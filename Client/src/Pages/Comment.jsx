@@ -11,6 +11,7 @@ export default function Comment({ isOpen, onClose, task, onCommentAdded }) {
     const [deletingId, setDeletingId] = useState(null);
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('userName');
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         if (isOpen && task) {
@@ -21,7 +22,7 @@ export default function Comment({ isOpen, onClose, task, onCommentAdded }) {
     const fetchComments = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:4000/api/v1/task/${task._id}/comments`, {
+            const response = await axios.get(`${baseUrl}/api/v1/task/${task._id}/comments`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setComments(response.data.comments || []);
@@ -43,7 +44,7 @@ export default function Comment({ isOpen, onClose, task, onCommentAdded }) {
             setSubmitting(true);
 
             const response = await axios.post(
-                `http://localhost:4000/api/v1/task/${task._id}/createcomment`,
+                `${baseUrl}/api/v1/task/${task._id}/createcomment`,
                 { content: newComment.trim(), createdBy: user, createdAt: new Date() },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -66,7 +67,7 @@ export default function Comment({ isOpen, onClose, task, onCommentAdded }) {
             setDeletingId(commentId);
 
             // API call to delete comment
-            await axios.delete(`http://localhost:4000/api/v1/comment/deleteComment`, {
+            await axios.delete(`${baseUrl}/api/v1/comment/deleteComment`, {
                 data: { id: commentId },
                 headers: { Authorization: `Bearer ${token}` }
             });

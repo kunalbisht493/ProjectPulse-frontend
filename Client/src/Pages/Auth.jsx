@@ -12,6 +12,7 @@ function Auth({ setIsLoggedIn }) {
     const { userData, setUserData, isSignUp, setIsSignUp } = useContext(AppContext);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -39,8 +40,8 @@ function Auth({ setIsLoggedIn }) {
         try {
             setLoading(true);
             const URl = isSignUp
-                ? "http://localhost:4000/api/v1/signup"
-                : "http://localhost:4000/api/v1/login";
+                ? `${baseUrl}/api/v1/signup`
+                : `${baseUrl}/api/v1/login`;
 
             const res = await axios.post(URl, payload, {
                 headers: {

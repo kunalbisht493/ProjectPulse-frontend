@@ -18,6 +18,7 @@ import Loader from '../Components/Loader';
 const Dashboard = () => {
   // Get data from your existing context
   const { projectDetails, setProjectDetails, currentUser, setCurrentUser } = useContext(AppContext);
+  const baseUrl = process.env.REACT_APP_API_URL;
 
   // State management
   const [users, setUsers] = useState([]);
@@ -52,7 +53,7 @@ const Dashboard = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/api/v1/user/profile", {
+      const response = await axios.get(`${baseUrl}/api/v1/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCurrentUser(response.data.user);
@@ -75,7 +76,7 @@ const Dashboard = () => {
       let userProjects = projectDetails;
 
       if (!projectDetails || projectDetails.length === 0) {
-        const projectsRes = await axios.get("http://localhost:4000/api/v1/project/getprojects", {
+        const projectsRes = await axios.get(`${baseUrl}/api/v1/project/getprojects`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         userProjects = projectsRes.data.projects || [];
@@ -95,7 +96,7 @@ const Dashboard = () => {
       // Fetch users (admin only)
       if (currentUser?.role === 'admin') {
         try {
-          const usersRes = await axios.get("http://localhost:4000/api/v1/user/search", {
+          const usersRes = await axios.get(`${baseUrl}/api/v1/user/search`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUsers(usersRes.data.users || []);
@@ -110,7 +111,7 @@ const Dashboard = () => {
       const allTasks = [];
       for (const project of userProjects) {
         try {
-          const tasksRes = await axios.get(`http://localhost:4000/api/v1/project/task/${project._id}`, {
+          const tasksRes = await axios.get(`${baseUrl}/api/v1/project/task/${project._id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           allTasks.push(...(tasksRes.data.tasks || []).map(task => ({
@@ -142,7 +143,7 @@ const Dashboard = () => {
       const confirmDelete = window.confirm("Are you sure you want to delete this user?");
       if (!confirmDelete) return;
 
-      axios.delete(`http://localhost:4000/api/v1/user/delete/${usersId}`,{
+      axios.delete(`${baseUrl}/api/v1/user/delete/${usersId}`,{
         headers: { Authorization: `Bearer ${token}` },
       });
       setDeletingUserId(usersId);

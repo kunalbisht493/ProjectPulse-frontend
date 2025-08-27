@@ -13,6 +13,7 @@ function CreateTask() {
     const { projectId } = useParams();
     const searchRef = useRef(null);
     const suggestionsRef = useRef(null);
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     // Close suggestions when clicking outside
     useEffect(() => {
@@ -43,7 +44,7 @@ function CreateTask() {
             setIsLoading(true);
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get('http://localhost:4000/api/v1/user/search', {
+                const response = await axios.get(`${baseUrl}/api/v1/user/search`, {
                     params: { search: searchQuery },
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -85,7 +86,7 @@ function CreateTask() {
         console.log("Payload for task creation:", payload);
 
         try {
-            const res = await axios.post(`http://localhost:4000/api/v1/project/${projectId}/createtask`, payload, {
+            const res = await axios.post(`${baseUrl}/api/v1/project/${projectId}/createtask`, payload, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                     "Content-Type": "application/json"

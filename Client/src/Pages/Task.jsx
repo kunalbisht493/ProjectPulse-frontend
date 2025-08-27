@@ -30,7 +30,7 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
     const { isOver, setNodeRef } = useDroppable({
         id: status,
     });
-
+    const baseUrl = process.env.REACT_APP_API_URL;
     return (
         <div
             className={`${bgGradient} rounded-2xl border ${borderColor} overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 ${isOver ? 'ring-2 ring-blue-400/40' : ''}`}
@@ -123,7 +123,7 @@ function Task() {
     useEffect(() => {
         const fetchUserRole = async () => {
             try {
-                const res = await axios.get("http://localhost:4000/api/v1/user/profile", {
+                const res = await axios.get(`${baseUrl}/api/v1/user/profile`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -147,7 +147,7 @@ function Task() {
                 setCurrentProject(project);
             } else {
                 try {
-                    const res = await axios.get(`http://localhost:4000/api/v1/project/getproject/${projectId}`, {
+                    const res = await axios.get(`${baseUrl}/api/v1/project/getproject/${projectId}`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -168,7 +168,7 @@ function Task() {
     useEffect(() => {
         const fetchTasks = async () => {
             try {
-                const res = await axios.get(`http://localhost:4000/api/v1/project/task/${projectId}`, {
+                const res = await axios.get(`${baseUrl}/api/v1/project/task/${projectId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setTasks(res.data.tasks);
@@ -270,7 +270,7 @@ function Task() {
             });
 
             await axios.put(
-                `http://localhost:4000/api/v1/project/taskupdate/${taskId}`,
+                `${baseUrl}/api/v1/project/taskupdate/${taskId}`,
                 { status: newStatus },
                 {
                     headers: { Authorization: `Bearer ${token}` }

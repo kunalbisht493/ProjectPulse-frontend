@@ -14,12 +14,13 @@ function Project() {
     const [userRole, setUserRole] = useState(null);
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 // Fetch user profile to get role
-                const userRes = await axios.get("http://localhost:4000/api/v1/user/profile", {
+                const userRes = await axios.get(`${baseUrl}/api/v1/user/profile`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -27,7 +28,7 @@ function Project() {
                 setUserRole(userRes.data.user.role); // Assuming role is in user object
 
                 // Fetch projects
-                const projectRes = await axios.get("http://localhost:4000/api/v1/project/getprojects", {
+                const projectRes = await axios.get(`${baseUrl}/api/v1/project/getprojects`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -57,7 +58,7 @@ function Project() {
         }
 
         try {
-            const res = await axios.put(`http://localhost:4000/api/v1/project/${projectId}/softdelete`, {},
+            const res = await axios.put(`${baseUrl}/api/v1/project/${projectId}/softdelete`, {},
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

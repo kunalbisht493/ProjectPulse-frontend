@@ -11,6 +11,7 @@ function LandingPage() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         const checkUserRole = async () => {
@@ -21,7 +22,7 @@ function LandingPage() {
                 }
 
                 // Fetch user profile to get role
-                const userRes = await axios.get("http://localhost:4000/api/v1/user/profile", {
+                const userRes = await axios.get(`${baseUrl}/api/v1/user/profile`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

@@ -15,6 +15,7 @@ function CreateProject({ onClose }) {
     const searchRef = useRef(null);
     const suggestionsRef = useRef(null);
     const navigate = useNavigate();
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     // Close suggestions when clicking outside
     useEffect(() => {
@@ -45,7 +46,7 @@ function CreateProject({ onClose }) {
             setIsLoading(true);
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get('http://localhost:4000/api/v1/user/search', {
+                const response = await axios.get(`${baseUrl}/api/v1/user/search`, {
                     params: { search: searchQuery },
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -97,7 +98,7 @@ function CreateProject({ onClose }) {
         const { name, description, ProjectManager, deadline } = projectData
         const payload = { name, description, ProjectManager, deadline }
         try {
-            const URL = "http://localhost:4000/api/v1/project/createproject"
+            const URL = `${baseUrl}/api/v1/project/createproject`
             const res = await axios.post(URL, payload, {
                 headers: {
                     "Content-Type": "application/json"

@@ -11,6 +11,7 @@ function TrashProject() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         const checkRoleAndFetchTrash = async () => {
@@ -21,7 +22,7 @@ function TrashProject() {
                 }
 
                 // Check user role first
-                const userRes = await axios.get("http://localhost:4000/api/v1/user/profile", {
+                const userRes = await axios.get(`${baseUrl}/api/v1/user/profile`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -37,7 +38,7 @@ function TrashProject() {
                 }
 
                 // Fetch trashed projects
-                const res = await axios.get("http://localhost:4000/api/v1/project/getTrashedProject", {
+                const res = await axios.get(`${baseUrl}/api/v1/project/getTrashedProject`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -57,7 +58,7 @@ function TrashProject() {
     // FOR RECOVERY
     const handleRecover = async (projectId) => {
         try {
-            const res = await axios.put(`http://localhost:4000/api/v1/project/${projectId}/restoreProject`, {}, {
+            const res = await axios.put(`${baseUrl}/api/v1/project/${projectId}/restoreProject`, {}, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -77,7 +78,7 @@ function TrashProject() {
         if (!confirmed) return;
 
         try {
-            const res = await axios.delete(`http://localhost:4000/api/v1/project/trash/deleteproject/${projectId}`, {
+            const res = await axios.delete(`${baseUrl}/api/v1/project/trash/deleteproject/${projectId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

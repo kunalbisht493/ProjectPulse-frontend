@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 const socket = io("http://localhost:4000");
+const baseUrl = process.env.REACT_APP_API_URL;
 
 export default function Notification() {
     const token = localStorage.getItem("token");
@@ -30,7 +31,7 @@ export default function Notification() {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`http://localhost:4000/api/v1/notifications`, {
+            const res = await axios.get(`${baseUrl}/api/v1/notifications`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -46,7 +47,7 @@ export default function Notification() {
     const handleMarkAsRead = async (e,notificationId) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`http://localhost:4000/api/v1/notifications/markasread`, {id:notificationId}, {
+            const res = await axios.put(`${baseUrl}/api/v1/notifications/markasread`, {id:notificationId}, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

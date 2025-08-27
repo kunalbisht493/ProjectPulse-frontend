@@ -12,6 +12,8 @@ function VerifyEmail() {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
+    const baseUrl = process.env.REACT_APP_API_URL;
+
 
     // Get email from navigation state
     const email = location.state?.email;
@@ -43,14 +45,14 @@ function VerifyEmail() {
     const handleTokenVerification = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`http://localhost:4000/api/v1/verify-email?token=${encodeURIComponent(token)}`, {
+            const res = await axios.get(`${baseUrl}/api/v1/verify-email?token=${encodeURIComponent(token)}`, {
                 token: token
             }, {
                 headers: {
                     "Content-Type": "application/json"
                 }
             });
-            console.log('verify',res.data)
+            console.log('verify', res.data)
 
             showSuccess("Email verified successfully! Redirecting to login...");
             setIsVerified(true);
@@ -70,7 +72,7 @@ function VerifyEmail() {
     const handleResend = async () => {
         try {
             setResendLoading(true);
-            await axios.post("http://localhost:4000/api/v1/resend-verification", {
+            await axios.post(`${baseUrl}/api/v1/resend-verification`, {
                 email: email
             }, {
                 headers: {

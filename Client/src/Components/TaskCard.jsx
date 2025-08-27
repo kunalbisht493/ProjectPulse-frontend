@@ -9,6 +9,7 @@ function TaskCard({ task, setTasks, dragHandleProps = {}, isDragging = false, is
     const [showCommentModal, setShowCommentModal] = useState(false);
     const [commentCount, setCommentCount] = useState(0);
     const token = localStorage.getItem('token');
+    const baseUrl = process.env.REACT_APP_API_URL;
 
     // Fetch comment count on component mount
     useEffect(() => {
@@ -17,7 +18,7 @@ function TaskCard({ task, setTasks, dragHandleProps = {}, isDragging = false, is
 
     const fetchCommentCount = async () => {
         try {
-            const response = await axios.get(`http://localhost:4000/api/v1/task/${task._id}/comments`, {
+            const response = await axios.get(`${baseUrl}/api/v1/task/${task._id}/comments`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCommentCount(response.data.comments?.length || 0);
@@ -32,7 +33,7 @@ function TaskCard({ task, setTasks, dragHandleProps = {}, isDragging = false, is
         e.stopPropagation();
         e.preventDefault();
         try {
-            const res = await axios.delete(`http://localhost:4000/api/v1/task/deletetask/${task._id}`, {
+            const res = await axios.delete(`${baseUrl}/api/v1/task/deletetask/${task._id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
