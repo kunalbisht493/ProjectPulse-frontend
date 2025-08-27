@@ -16,8 +16,9 @@ import {
     Calendar
 } from "lucide-react";
 
-const socket = io("http://localhost:4000");
+
 const baseUrl = import.meta.env.VITE_API_URL;
+const socket = io(`${baseUrl}`);
 
 export default function Notification() {
     const token = localStorage.getItem("token");
