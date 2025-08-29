@@ -30,7 +30,8 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
     const { isOver, setNodeRef } = useDroppable({
         id: status,
     });
-  
+
+
     return (
         <div
             className={`${bgGradient} rounded-2xl border ${borderColor} overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 ${isOver ? 'ring-2 ring-blue-400/40' : ''}`}
@@ -357,7 +358,7 @@ function Task() {
                     </div>
 
                     {/* Optimized Add Task Button */}
-                    {(userRole== 'manager' || userRole == 'admin') && <div className="mb-8 flex justify-start">
+                    {(userRole == 'manager' || userRole == 'admin') && <div className="mb-8 flex justify-start">
                         <button
                             onClick={() => handleCreateTask('todo')}
                             className="bg-white/90 hover:bg-white border border-slate-200/60 hover:border-slate-300/80 rounded-xl px-6 py-4 transition-all duration-150 shadow-lg hover:shadow-xl relative overflow-hidden"
