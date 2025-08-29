@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../Context/AppContext";
 import { Trash, Edit } from "lucide-react";
-import CreateProject from "./CreateProject";
+import CreateProject from "../Pages/CreateProject";
 import { showError, showSuccess } from "../Utils/Toast";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -233,12 +233,6 @@ function Project() {
             {/* Modals - Only show for managers and admins */}
             {(userRole === 'manager' || userRole === 'admin') && showModal && (
                 <CreateProject
-                    onClose={handleCloseModal}
-                    editingProject={editingProject}
-                />
-            )}
-            {(userRole === 'manager' || userRole === 'admin') && showUpdate && (
-                <UpdateProject
                     onClose={handleCloseModal}
                     editingProject={editingProject}
                 />
