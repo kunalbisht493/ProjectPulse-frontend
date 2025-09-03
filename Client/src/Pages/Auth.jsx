@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { showError, showSuccess } from "../Utils/Toast";
 import { AppContext } from "../Context/AppContext";
 import Loader from "../Components/Loader";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import validator from "validator";
 
 
@@ -13,7 +13,6 @@ function Auth({ setIsLoggedIn }) {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const baseUrl = import.meta.env.VITE_API_URL;
-
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
     };
@@ -56,13 +55,20 @@ function Auth({ setIsLoggedIn }) {
                 navigate("/verify-email", { state: { email: email } });
                 setUserData({ name: "", email: "", password: "", role: "" });
             } else {
-                showSuccess("Login successful");
+                const userRole = res.data.user.role;
+
+                localStorage.setItem("token", res.data.token);
+                localStorage.setItem("userName", res.data.user.name);
                 setIsLoggedIn(true);
-                setLoading(false);
-                console.log("Login response:", res.data);
-                localStorage.setItem("token", res.data.token)
-                localStorage.setItem("userName", res.data.user.name)
-                navigate("/");
+                showSuccess("Login successful");
+
+
+                // Redirect based on role
+                if (userRole === 'manager' || userRole === 'admin') {
+                    navigate('/');
+                } else {
+                    navigate('/project');
+                }
             }
 
         } catch (err) {
@@ -72,15 +78,23 @@ function Auth({ setIsLoggedIn }) {
                 setLoading(false)
             }
             console.log("err", errorMessage)
+            if (errorMessage == "Invalid credentials") {
+                setLoading(false)
+                navigate('/auth')
+            }
             if (errorMessage === "Email not verified. Please verify your email to log in.") {
                 showError("Please verify your email before logging in.");
                 navigate("/verify-email", { state: { email: email } });
             } else {
                 showError(errorMessage);
+                setLoading(false);
             }
+
 
         }
     };
+
+
     if (loading) {
         return <Loader />;
     }

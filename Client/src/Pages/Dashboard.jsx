@@ -136,20 +136,20 @@ const Dashboard = () => {
   };
 
   // DELETE USER FROM DATABASE
-  const handleDelete = async (e,usersId) => {
+  const handleDelete = async (e, usersId) => {
     e.preventDefault();
-    try{
+    try {
       setLoading(true)
       const confirmDelete = window.confirm("Are you sure you want to delete this user?");
       if (!confirmDelete) return;
 
-      axios.delete(`${baseUrl}/api/v1/user/delete/${usersId}`,{
+      axios.delete(`${baseUrl}/api/v1/user/delete/${usersId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDeletingUserId(usersId);
       setUsers(prevUsers => prevUsers.filter(user => user._id !== usersId && user.id !== usersId));
       setLoading(false)
-    }catch (error) {
+    } catch (error) {
       console.error("Error deleting user:", error);
       showError("Failed to delete user");
     }
@@ -226,23 +226,23 @@ const Dashboard = () => {
   }, [visibleProjects, tasks]);
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
+    <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${color.replace('from-', 'bg-').replace('-500', '-100').replace(' to-', ' text-').replace('-600', '-600')}`}>
-            <Icon size={24} />
+        <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${color.replace('from-', 'bg-').replace('-500', '-100').replace(' to-', ' text-').replace('-600', '-600')}`}>
+            <Icon size={18} className="sm:w-6 sm:h-6" />
           </div>
           {trend && (
             <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              <TrendingUp size={12} className={trend < 0 ? 'rotate-180' : ''} />
+              <TrendingUp size={10} className={`sm:w-3 sm:h-3 ${trend < 0 ? 'rotate-180' : ''}`} />
               {Math.abs(trend)}%
             </div>
           )}
         </div>
         <div className="space-y-1">
-          <p className="text-2xl font-bold text-gray-800">{value}</p>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-800">{value}</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-600">{title}</p>
           {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
         </div>
       </div>
@@ -271,53 +271,53 @@ const Dashboard = () => {
     };
 
     return (
-      <NavLink to={`/task/${project._id}`} className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
+      <NavLink to={`/task/${project._id}`} className="bg-white/70 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group block">
+        <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-2">
               {project.name}
             </h3>
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
               {project.description || "No description available"}
             </p>
           </div>
           {isOverdue && (
-            <div className="bg-red-100 text-red-600 p-2 rounded-lg">
-              <AlertTriangle size={16} />
+            <div className="bg-red-100 text-red-600 p-1.5 sm:p-2 rounded-lg flex-shrink-0 ml-2">
+              <AlertTriangle size={14} className="sm:w-4 sm:h-4" />
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
             {project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Unknown'}
           </span>
         </div>
 
-        <div className="mb-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div className="mb-3 sm:mb-4">
+          <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-2">
             <span>Progress</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center text-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-gray-600">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs sm:text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <span className="text-gray-600 flex items-center gap-1">
               📅 {new Date(project.deadline).toLocaleDateString()}
             </span>
-            <span className="text-gray-600">
+            <span className="text-gray-600 flex items-center gap-1">
               👤 {project.ProjectManager?.name || 'N/A'}
             </span>
           </div>
           <div className="flex items-center gap-1 text-gray-500">
-            <Target size={14} />
+            <Target size={12} className="sm:w-3.5 sm:h-3.5" />
             <span>{totalTasks} tasks</span>
           </div>
         </div>
@@ -332,7 +332,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 relative overflow-hidden">
+    <div className="min-h-screen pt-16 sm:pt-20 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 relative overflow-hidden">
       {/* Background Elements */}
       <div className="fixed inset-0 pointer-events-none opacity-60">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/15 to-indigo-200/10 rounded-full blur-3xl"></div>
@@ -340,27 +340,27 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-3 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 sm:mb-6">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
                 {currentUser?.role === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
               </h1>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
                 Welcome back, {currentUser?.name || 'User'}! Here's your project overview.
               </p>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1 border border-white/20 inline-flex">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 border border-white/20 flex overflow-x-auto">
             {['overview', 'projects', ...(currentUser?.role === 'admin' ? ['users', 'analytics'] : [])].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 capitalize ${activeTab === tab
+                className={`px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium transition-all duration-200 capitalize whitespace-nowrap text-sm sm:text-base ${activeTab === tab
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50/50'
                   }`}
@@ -373,9 +373,9 @@ const Dashboard = () => {
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <StatCard
                 icon={Briefcase}
                 title="Total Projects"
@@ -407,17 +407,17 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {/* Project Status Chart */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">Project Status</h3>
-                <ResponsiveContainer width="100%" height={300}>
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Project Status</h3>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={projectStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      outerRadius={80}
                       dataKey="value"
                       label={({ name, value }) => `${name}: ${value}`}
                     >
@@ -431,13 +431,13 @@ const Dashboard = () => {
               </div>
 
               {/* Task Progress Chart */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">Task Progress by Project</h3>
-                <ResponsiveContainer width="100%" height={300}>
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Task Progress by Project</h3>
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={taskProgressData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Bar dataKey="todo" stackId="a" fill="#64748b" name="To Do" />
                     <Bar dataKey="inprogress" stackId="a" fill="#3b82f6" name="In Progress" />
@@ -448,14 +448,14 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Projects */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-800">Recent Projects</h3>
-                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Recent Projects</h3>
+                <button className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm">
                   View All
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {visibleProjects.slice(0, 3).map(project => (
                   <ProjectCard key={project._id} project={project} />
                 ))}
@@ -466,12 +466,12 @@ const Dashboard = () => {
 
         {/* Projects Tab */}
         {activeTab === 'projects' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">All Projects</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">All Projects</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {visibleProjects.map(project => (
                 <ProjectCard key={project._id} project={project} />
               ))}
@@ -481,25 +481,25 @@ const Dashboard = () => {
 
         {/* Users Tab (Admin Only) */}
         {activeTab === 'users' && currentUser?.role === 'admin' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2">
-                <Plus size={16} />
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">User Management</h2>
+              <button className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center">
+                <Plus size={14} className="sm:w-4 sm:h-4" />
                 Add User
               </button>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-white/20">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-4 px-9 font-semibold text-gray-700">Name</th>
-                      <th className="text-left py-4 px-9 font-semibold text-gray-700">Email</th>
-                      <th className="text-left py-4 px-8 font-semibold text-gray-700">Role</th>
-                      <th className="text-left py-4 px-9 font-semibold text-gray-700">Projects</th>
-                      <th className="text-left py-4 px-7 font-semibold text-gray-700">Actions</th>
+                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Name</th>
+                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Email</th>
+                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Role</th>
+                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Projects</th>
+                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -509,25 +509,27 @@ const Dashboard = () => {
 
                       return (
                         <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="font-medium text-blue-600">
+                          <td className="py-3 sm:py-4 px-2 sm:px-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="font-medium text-blue-600 text-sm sm:text-base">
                                   {user.name.charAt(0).toUpperCase()}
                                 </span>
                               </div>
-                              <div>
-                                <span className="font-medium text-gray-800">{user.name}</span>
+                              <div className="min-w-0">
+                                <span className="font-medium text-gray-800 text-sm sm:text-base block truncate">{user.name}</span>
                                 {isCurrentUser && (
-                                  <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
                                     You
                                   </span>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-gray-600">{user.email}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-600 text-sm sm:text-base">
+                            <div className="truncate max-w-[150px] sm:max-w-none">{user.email}</div>
+                          </td>
+                          <td className="py-3 sm:py-4 px-2 sm:px-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin'
                               ? 'bg-purple-100 text-purple-700'
                               : user.role === 'manager'
@@ -537,16 +539,16 @@ const Dashboard = () => {
                               {user.role}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-gray-600">{user.projectsCount || 0}</td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <button className="p-2 hover:bg-yellow-100 rounded-lg transition-colors">
-                                <Edit size={16} className="text-yellow-600" />
+                          <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-600 text-sm sm:text-base">{user.projectsCount || 0}</td>
+                          <td className="py-3 sm:py-4 px-2 sm:px-4">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <button className="p-1.5 sm:p-2 hover:bg-yellow-100 rounded-lg transition-colors">
+                                <Edit size={14} className="text-yellow-600 sm:w-4 sm:h-4" />
                               </button>
 
-                              {user.role != 'admin' && <button className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                onClick={(e) => handleDelete(e,user._id || user.id, user.name)}>
-                                <Trash2 size={16} className="text-red-600" />
+                              {user.role != 'admin' && <button className="p-1.5 sm:p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                onClick={(e) => handleDelete(e, user._id || user.id, user.name)}>
+                                <Trash2 size={14} className="text-red-600 sm:w-4 sm:h-4" />
                               </button>}
                             </div>
                           </td>
@@ -562,27 +564,27 @@ const Dashboard = () => {
 
         {/* Analytics Tab (Admin Only) */}
         {activeTab === 'analytics' && currentUser?.role === 'admin' && (
-          <div className="space-y-8">
-            <h2 className="text-2xl font-bold text-gray-800">Analytics & Reports</h2>
+          <div className="space-y-6 sm:space-y-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Analytics & Reports</h2>
 
             {/* Performance Metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">Team Performance</h3>
-                <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Team Performance</h3>
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Average Completion Rate</span>
-                    <span className="font-bold text-green-600">{stats.completionRate}%</span>
+                    <span className="text-gray-600 text-sm sm:text-base">Average Completion Rate</span>
+                    <span className="font-bold text-green-600 text-sm sm:text-base">{stats.completionRate}%</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Projects On Time</span>
-                    <span className="font-bold text-blue-600">
+                    <span className="text-gray-600 text-sm sm:text-base">Projects On Time</span>
+                    <span className="font-bold text-blue-600 text-sm sm:text-base">
                       {stats.totalProjects > 0 ? Math.round(((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100) : 0}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Active Team Members</span>
-                    <span className="font-bold text-purple-600">{users.length}</span>
+                    <span className="text-gray-600 text-sm sm:text-base">Active Team Members</span>
+                    <span className="font-bold text-purple-600 text-sm sm:text-base">{users.length}</span>
                   </div>
                 </div>
               </div>
@@ -595,8 +597,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-
-
