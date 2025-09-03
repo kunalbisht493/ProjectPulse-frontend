@@ -234,15 +234,9 @@ function Project() {
             {(userRole === 'manager' || userRole === 'admin') && showModal && (
                 <CreateProject
                     onClose={handleCloseModal}
-                    editingProject={editingProject}
                 />
             )}
-            {(userRole === 'manager' || userRole === 'admin') && showUpdate && (
-                <UpdateProject
-                    onClose={handleCloseModal}
-                    editingProject={editingProject}
-                />
-            )}
+           
         </div>
     );
 }
