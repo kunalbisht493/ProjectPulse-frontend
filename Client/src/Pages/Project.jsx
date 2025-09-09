@@ -75,7 +75,23 @@ function Project() {
     const handleCloseModal = () => {
         setShowModal(false);
         setShowUpdate(false);
-        setEditingProject(null);
+    };
+
+    // Format deadline with status indicator
+    const getDeadlineStatus = (deadline) => {
+        const now = new Date();
+        const deadlineDate = new Date(deadline);
+        const daysUntil = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+
+        if (daysUntil < 0) {
+            return { status: 'overdue', text: 'Overdue', color: 'text-red-600 bg-red-50/80 border-red-200/50' };
+        } else if (daysUntil <= 3) {
+            return { status: 'urgent', text: 'Due Soon', color: 'text-orange-600 bg-orange-50/80 border-orange-200/50' };
+        } else if (daysUntil <= 7) {
+            return { status: 'upcoming', text: 'This Week', color: 'text-yellow-600 bg-yellow-50/80 border-yellow-200/50' };
+        } else {
+            return { status: 'normal', text: 'On Track', color: 'text-emerald-600 bg-emerald-50/80 border-emerald-200/50' };
+        }
     };
 
     // If loading, show a loader
@@ -124,6 +140,8 @@ function Project() {
                     <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm rounded-t-xl border border-gray-200/50 p-4">
                         <div className="flex items-center justify-between text-sm font-semibold text-gray-700 uppercase tracking-wide">
                             <div className="flex-1 text-center">Project Name</div>
+                            <div className="flex-1 text-center">Status</div>
+                            <div className="flex-1 text-center">Start Date</div>
                             <div className="flex-1 text-center">Deadline</div>
                             <div className="flex-1 text-center">Project Manager</div>
                             {(userRole === 'manager' || userRole === 'admin') && <div className="flex-1 text-center">Actions</div>}
@@ -134,85 +152,98 @@ function Project() {
                 {/* Projects List */}
                 <div className="space-y-2 sm:space-y-3">
                     {projectDetails.length > 0 ? (
-                        projectDetails.map((project, index) => (
-                            <div
-                                key={project._id}
-                                className="group bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-md rounded-lg border border-gray-200/50 hover:border-blue-200/50 transition-all duration-300 hover:bg-white/90 transform hover:-translate-y-0.5"
-                            >
-                                <NavLink to={`/task/${project._id}`} className="block">
-                                    {/* Desktop Layout */}
-                                    <div className="hidden lg:flex items-center justify-between p-4">
-                                        <div className="flex-1 text-center">
-                                            <div className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-200 hover:underline">
-                                                {project.name}
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 text-center">
-                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50/50 text-blue-700 border border-blue-100/50">
-                                                📅 {new Date(project.deadline).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 text-center">
-                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50/50 text-green-700 border border-green-100/50">
-                                                👤 {project.ProjectManager?.name || 'N/A'}
-                                            </div>
-                                        </div>
-                                        {/* Only show actions for managers and admins */}
-                                        {(userRole === 'manager' || userRole === 'admin') && (
+                        projectDetails.map((project) => {
+                            const deadlineStatus = getDeadlineStatus(project.deadline);
+                            return (
+                                <div
+                                    key={project._id}
+                                    className="group bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-md rounded-lg border border-gray-200/50 hover:border-blue-200/50 transition-all duration-300 hover:bg-white/90 transform hover:-translate-y-0.5"
+                                >
+                                    <NavLink to={`/task/${project._id}`} className="block">
+                                        {/* Desktop Layout */}
+                                        <div className="hidden lg:flex items-center justify-between p-4">
                                             <div className="flex-1 text-center">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button
-                                                        onClick={(e) => handleDelete(e, project._id)}
-                                                        className="inline-flex items-center cursor-pointer justify-center w-10 h-10 rounded-full bg-red-50/50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110 group-hover:shadow-md border border-red-100/50 hover:border-red-200"
-                                                        title="Delete Project"
-                                                    >
-                                                        <Trash size={16}></Trash>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Mobile/Tablet Layout */}
-                                    <div className="lg:hidden p-3 sm:p-4">
-                                        <div className="space-y-3">
-                                            {/* Project Name */}
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-200 text-sm sm:text-base">
+                                                <div className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-200 hover:underline">
                                                     {project.name}
-                                                </h3>
-                                                {/* Actions for mobile - Only for managers and admins */}
-                                                {(userRole === 'manager' || userRole === 'admin') && (
-                                                    <button
-                                                        onClick={(e) => handleDelete(e, project._id)}
-                                                        className="inline-flex items-center cursor-pointer justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-50/50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110 border border-red-100/50 hover:border-red-200"
-                                                        title="Delete Project"
-                                                    >
-                                                        <Trash size={14}></Trash>
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {/* Project Details */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                                                <div className="flex items-center text-xs sm:text-sm">
-                                                    <span className="text-gray-500 mr-2">📅 Deadline:</span>
-                                                    <span className="text-blue-700 font-medium">
-                                                        {new Date(project.deadline).toLocaleDateString()}
-                                                    </span>
                                                 </div>
-                                                <div className="flex items-center text-xs sm:text-sm">
-                                                    <span className="text-gray-500 mr-2">👤 Manager:</span>
-                                                    <span className="text-green-700 font-medium">
-                                                        {project.ProjectManager?.name || 'N/A'}
-                                                    </span>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${deadlineStatus.color}`}>
+                                                    {deadlineStatus.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50/50 text-blue-700 border border-blue-100/50">
+                                                    📅 {new Date(project.createdAt).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50/50 text-blue-700 border border-blue-100/50">
+                                                    📅 {new Date(project.deadline).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50/50 text-green-700 border border-green-100/50">
+                                                    👤 {project.ProjectManager?.name || 'N/A'}
+                                                </div>
+                                            </div>
+                                            {/* Only show actions for managers and admins */}
+                                            {(userRole === 'manager' || userRole === 'admin') && (
+                                                <div className="flex-1 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={(e) => handleDelete(e, project._id)}
+                                                            className="inline-flex items-center cursor-pointer justify-center w-10 h-10 rounded-full bg-red-50/50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110 group-hover:shadow-md border border-red-100/50 hover:border-red-200"
+                                                            title="Delete Project"
+                                                        >
+                                                            <Trash size={16}></Trash>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Mobile/Tablet Layout */}
+                                        <div className="lg:hidden p-3 sm:p-4">
+                                            <div className="space-y-3">
+                                                {/* Project Name */}
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-200 text-sm sm:text-base">
+                                                        {project.name}
+                                                    </h3>
+                                                    {/* Actions for mobile - Only for managers and admins */}
+                                                    {(userRole === 'manager' || userRole === 'admin') && (
+                                                        <button
+                                                            onClick={(e) => handleDelete(e, project._id)}
+                                                            className="inline-flex items-center cursor-pointer justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-50/50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110 border border-red-100/50 hover:border-red-200"
+                                                            title="Delete Project"
+                                                        >
+                                                            <Trash size={14}></Trash>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Project Details */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                                                    <div className="flex items-center text-xs sm:text-sm">
+                                                        <span className="text-gray-500 mr-2">📅 Deadline:</span>
+                                                        <span className="text-blue-700 font-medium">
+                                                            {new Date(project.deadline).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center text-xs sm:text-sm">
+                                                        <span className="text-gray-500 mr-2">👤 Manager:</span>
+                                                        <span className="text-green-700 font-medium">
+                                                            {project.ProjectManager?.name || 'N/A'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </NavLink>
-                            </div>
-                        ))
+                                    </NavLink>
+                                </div>
+                            )
+                        })
                     ) : (
                         <div className="text-center py-8 sm:py-12 md:py-16">
                             <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-gray-200/50 max-w-sm sm:max-w-md mx-auto">
@@ -236,7 +267,6 @@ function Project() {
                     onClose={handleCloseModal}
                 />
             )}
-           
         </div>
     );
 }
