@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../Context/AppContext";
-import { Plus, Calendar, User } from "lucide-react";
+import { Plus, Calendar, User, BarChart3, Target, TrendingUp, CheckCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { showError } from "../Utils/Toast";
@@ -30,7 +30,6 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
     const { isOver, setNodeRef } = useDroppable({
         id: status,
     });
-
 
     return (
         <div
@@ -139,7 +138,6 @@ function Task() {
             fetchUserRole();
         }
     }, [token]);
-
 
     // Get current project by ID from URL
     useEffect(() => {
@@ -288,6 +286,12 @@ function Task() {
         }
     };
 
+    // Calculate task statistics
+    const totalTasks = tasks.length;
+    const todoTasks = getTasksByStatus('todo').length;
+    const inProgressTasks = getTasksByStatus('inprogress').length;
+    const completedTasks = getTasksByStatus('completed').length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     if (!currentProject) {
         return (
@@ -357,6 +361,73 @@ function Task() {
                         </div>
                     </div>
 
+                    {/* Task Statistics Section */}
+                    <div className="mb-8">
+                        <div className="bg-white/80 rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-shadow duration-200">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl">
+                                    <BarChart3 size={20} className="text-white" />
+                                </div>
+                                <h2 className="text-xl font-bold text-gray-800">Task Overview</h2>
+                            </div>
+                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                {/* Total Tasks */}
+                                <div className="bg-gradient-to-br from-slate-50/80 to-gray-50/80 rounded-xl p-4 border border-slate-200/60 text-center">
+                                    <div className="flex items-center justify-center mb-2">
+                                        <div className="p-2 bg-slate-100 rounded-lg">
+                                            <Target size={16} className="text-slate-600" />
+                                        </div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-slate-700 mb-1">{totalTasks}</div>
+                                    <div className="text-xs text-gray-600 font-medium">Total Tasks</div>
+                                </div>
+
+                                {/* Todo Tasks */}
+                                <div className="bg-gradient-to-br from-slate-50/80 to-gray-50/80 rounded-xl p-4 border border-slate-200/60 text-center">
+                                    <div className="flex items-center justify-center mb-2">
+                                        <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-slate-700 mb-1">{todoTasks}</div>
+                                    <div className="text-xs text-gray-600 font-medium">Todo</div>
+                                </div>
+
+                                {/* In Progress Tasks */}
+                                <div className="bg-gradient-to-br from-blue-50/80 to-cyan-50/80 rounded-xl p-4 border border-blue-200/60 text-center">
+                                    <div className="flex items-center justify-center mb-2">
+                                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-blue-700 mb-1">{inProgressTasks}</div>
+                                    <div className="text-xs text-gray-600 font-medium">In Progress</div>
+                                </div>
+
+                                {/* Completed Tasks */}
+                                <div className="bg-gradient-to-br from-emerald-50/80 to-green-50/80 rounded-xl p-4 border border-emerald-200/60 text-center">
+                                    <div className="flex items-center justify-center mb-2">
+                                        <div className="p-2 bg-emerald-100 rounded-lg">
+                                            <CheckCircle size={16} className="text-emerald-600" />
+                                        </div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-emerald-700 mb-1">{completedTasks}</div>
+                                    <div className="text-xs text-gray-600 font-medium">Completed</div>
+                                </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="mt-6">
+                                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>Project Progress</span>
+                                    <span>{completionRate}% Complete</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all duration-700"
+                                        style={{ width: `${completionRate}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Optimized Add Task Button */}
                     {(userRole == 'manager' || userRole == 'admin') && <div className="mb-8 flex justify-start">
                         <button
@@ -371,7 +442,6 @@ function Task() {
                             </div>
                         </button>
                     </div>}
-
 
                     {/* Optimized Kanban Board */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
