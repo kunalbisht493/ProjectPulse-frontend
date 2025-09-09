@@ -6,7 +6,7 @@ import {
 import {
   Users, FolderOpen, CheckCircle, Clock, AlertTriangle,
   TrendingUp, Calendar, User, Settings, Bell, Search,
-  Filter, Download, Eye, Edit, Trash2, Plus, Target,
+  Filter, Download, Eye, Edit, Trash2, Plus, Target, BarChart3,
   Activity, Award, Briefcase
 } from 'lucide-react';
 import axios from 'axios';
@@ -482,12 +482,10 @@ const Dashboard = () => {
         {/* Users Tab (Admin Only) */}
         {activeTab === 'users' && currentUser?.role === 'admin' && (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">User Management</h2>
-              <button className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center">
-                <Plus size={14} className="sm:w-4 sm:h-4" />
-                Add User
-              </button>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3 mb-4">
+               Users Management
+              </h2>
             </div>
 
             <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-white/20">
@@ -564,36 +562,127 @@ const Dashboard = () => {
 
         {/* Analytics Tab (Admin Only) */}
         {activeTab === 'analytics' && currentUser?.role === 'admin' && (
-          <div className="space-y-6 sm:space-y-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Analytics & Reports</h2>
+          <div className="space-y-8">
+            {/* Analytics Header */}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3 mb-4">
+                Analytics & Insights
+              </h2>
+              <p className="text-gray-600 max-w-xl mx-auto">
+                Deep dive into your team's performance and project metrics
+              </p>
+            </div>
 
-            {/* Performance Metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Team Performance</h3>
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 text-sm sm:text-base">Average Completion Rate</span>
-                    <span className="font-bold text-green-600 text-sm sm:text-base">{stats.completionRate}%</span>
+            {/* Analytics Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+              {/* Performance Dashboard */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Award size={20} className="text-slate-600" />
+                  Team Performance
+                </h3>
+
+                <div className="space-y-4">
+                  <div className="relative">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-700 font-medium">Completion Rate</span>
+                      <span className="font-bold text-emerald-600">{stats.completionRate}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${stats.completionRate}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 text-sm sm:text-base">Projects On Time</span>
-                    <span className="font-bold text-blue-600 text-sm sm:text-base">
-                      {stats.totalProjects > 0 ? Math.round(((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 text-sm sm:text-base">Active Team Members</span>
-                    <span className="font-bold text-purple-600 text-sm sm:text-base">{users.length}</span>
+
+                  <div className="relative">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-700 font-medium">On-Time Delivery</span>
+                      <span className="font-bold text-cyan-600">
+                        {stats.totalProjects > 0 ? Math.round(((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-cyan-500 to-cyan-600 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${stats.totalProjects > 0 ? ((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100 : 0}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Project Timeline */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Clock size={20} className="text-slate-600" />
+                  Project Timeline
+                </h3>
+
+                <div className="space-y-4">
+                  {visibleProjects.slice(0, 4).map((project, index) => {
+                    const isOverdue = new Date(project.deadline) < new Date() && project.status !== 'completed';
+                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+
+                    return (
+                      <div key={project._id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div className={`w-3 h-3 rounded-full ${project.status === 'completed' ? 'bg-emerald-500' : isOverdue ? 'bg-red-500' : 'bg-cyan-500'}`}></div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 truncate">{project.name}</h4>
+                          <p className="text-xs text-gray-600">
+                            {isOverdue ? `${Math.abs(daysLeft)} days overdue` :
+                              project.status === 'completed' ? 'Completed' :
+                                `${daysLeft} days left`}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-lg ${project.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                          isOverdue ? 'bg-red-100 text-red-700' :
+                            'bg-cyan-100 text-cyan-700'
+                          }`}>
+                          {project.status?.toUpperCase() || 'TODO'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Full Width Chart */}
+            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <BarChart3 size={20} className="text-slate-600" />
+                Detailed Task Analysis
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={taskProgressData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Bar dataKey="todo" stackId="a" fill="#64748b" name="To Do" radius={[0, 0, 4, 4]} />
+                  <Bar dataKey="inprogress" stackId="a" fill="#0891b2" name="In Progress" />
+                  <Bar dataKey="completed" stackId="a" fill="#059669" name="Completed" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+
+
