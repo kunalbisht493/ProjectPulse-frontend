@@ -1,4 +1,3 @@
-
 import { io } from "socket.io-client";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -13,9 +12,9 @@ import {
     AlertCircle,
     UserCheck,
     FileText,
-    Calendar
+    Calendar,
+    Folder
 } from "lucide-react";
-
 
 const baseUrl = import.meta.env.VITE_API_URL;
 const socket = io(`${baseUrl}`);
@@ -24,10 +23,11 @@ export default function Notification() {
     const token = localStorage.getItem("token");
     const decoded = token ? jwtDecode(token) : null;
     const userId = decoded ? decoded.userId : null;
-    
+
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, unread, read
+    const baseUrl = import.meta.env.VITE_API_URL;
 
     const fetchNotifications = async () => {
         try {
@@ -38,6 +38,7 @@ export default function Notification() {
                 }
             });
             setNotifications(res.data.notifications || []);
+            console.log(notifications);
         } catch (error) {
             console.error("Error fetching notifications:", error);
         } finally {
@@ -45,10 +46,10 @@ export default function Notification() {
         }
     };
 
-    const handleMarkAsRead = async (e,notificationId) => {
+    const handleMarkAsRead = async (e, notificationId) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`${baseUrl}/api/v1/notifications/markasread`, {id:notificationId}, {
+            const res = await axios.put(`${baseUrl}/api/v1/notifications/markasread`, { id: notificationId }, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -56,16 +57,16 @@ export default function Notification() {
 
             // Update local state
             setNotifications(prevNotifs => prevNotifs.map(n => n._id === notificationId ? { ...n, isRead: true } : n));
-        } 
+        }
         catch (error) {
             console.error("Error marking notification as read:", error);
         }
     }
-    const handleDelete = async (e,notificationId) => {
+    const handleDelete = async (e, notificationId) => {
         e.preventDefault();
-        try{
-            const res = await axios.delete(`http://localhost:4000/api/v1/notifications/delete/`, {
-                data: {id:notificationId},
+        try {
+            const res = await axios.delete(`${baseUrl}/api/v1/notifications/delete`, {
+                data: { id: notificationId },
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -73,7 +74,7 @@ export default function Notification() {
             // Update local state
             setNotifications(prevNotifs => prevNotifs.filter(n => n._id !== notificationId));
 
-        }catch(error){
+        } catch (error) {
             console.error("Error deleting notification:", error);
         }
 
@@ -196,6 +197,17 @@ export default function Notification() {
                 return <span>New notification</span>;
         }
     };
+
+    // Get project name from notification data
+    const getProjectName = (notification) => {
+        if (notification.data?.projectName) {
+            return notification.data.projectName;
+        } else if (notification.projectName) {
+            return notification.projectName;
+        }
+        return null;
+    };
+
 
     // Get time ago format
     const getTimeAgo = (createdAt) => {
@@ -334,6 +346,18 @@ export default function Notification() {
                                                 <div className="text-gray-800 mb-2">
                                                     {formatNotificationMessage(notification)}
                                                 </div>
+
+                                                {/* Project Name */}
+                                                {getProjectName(notification) && (
+                                                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                                                        <Folder size={14} />
+                                                        <span className="font-medium">Project:</span>
+                                                        <span className="text-indigo-600 font-semibold">
+                                                            {getProjectName(notification)}
+                                                        </span>
+                                                    </div>
+                                                )}
+
                                                 <div className="flex items-center gap-4 text-sm text-gray-500">
                                                     <span className="flex items-center gap-1">
                                                         <Clock size={14} />
@@ -353,7 +377,7 @@ export default function Notification() {
                                                 {!notification.isRead && (
                                                     <button
                                                         onClick={(e) => {
-                                                            handleMarkAsRead(e,notification._id)
+                                                            handleMarkAsRead(e, notification._id)
                                                         }}
                                                         className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
                                                         title="Mark as read"
@@ -368,7 +392,7 @@ export default function Notification() {
                                                 {/* Delete Button */}
                                                 <button
                                                     onClick={(e) => {
-                                                        handleDelete(e,notification._id)
+                                                        handleDelete(e, notification._id)
                                                     }}
                                                     className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                                                     title="Delete notification"
@@ -406,9 +430,3 @@ export default function Notification() {
         </div>
     );
 }
-
-
-
-
-
-
