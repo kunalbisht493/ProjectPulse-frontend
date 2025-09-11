@@ -33,15 +33,11 @@ function Auth({ setIsLoggedIn }) {
             showError("Password must be at least 6 characters long");
             return;
         }
-        if (!nameRegex.test(name)) {
+        if (isSignUp && !nameRegex.test(name)) {
             showError("Name can only contain letters and spaces");
             return;
         }
 
-        if (!role) {
-            showError("Please select a role");
-            return;
-        }
         if (isSignUp) {
             payload.name = name;
             payload.role = role;
