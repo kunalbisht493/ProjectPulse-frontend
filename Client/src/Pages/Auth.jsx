@@ -19,16 +19,27 @@ function Auth({ setIsLoggedIn }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const nameRegex = /^[A-Za-z\s]+$/;
+
         const { name, email, password, role } = userData;
         const payload = { email, password };
 
 
         if (!validator.isEmail(email)) {
-            showError("Please enter a valid email address");
+            showError("Please enter a valid email");
             return;
         }
         if (password.length < 8) {
             showError("Password must be at least 6 characters long");
+            return;
+        }
+        if (!nameRegex.test(name)) {
+            showError("Name can only contain letters and spaces");
+            return;
+        }
+
+        if (!role) {
+            showError("Please select a role");
             return;
         }
         if (isSignUp) {
