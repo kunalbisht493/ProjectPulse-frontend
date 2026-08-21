@@ -5,11 +5,12 @@ import { showError, showSuccess } from "../Utils/Toast";
 import { AppContext } from "../Context/AppContext";
 import Loader from "../Components/Loader";
 import validator from "validator";
-import { Activity, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, CheckCircle2, Shield } from "lucide-react";
+import { Activity, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, CheckCircle2, Shield, Eye, EyeOff } from "lucide-react";
 
 function Auth({ setIsLoggedIn }) {
     const { userData, setUserData, isSignUp, setIsSignUp } = useContext(AppContext);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const baseUrl = import.meta.env.VITE_API_URL;
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -72,26 +73,32 @@ function Auth({ setIsLoggedIn }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const nameRegex = /^[A-Za-z\s]+$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=-])[A-Za-z\d@$!%*?&#^()_+=-]{8,}$/;
 
         const { name, email, password, role } = userData;
         const payload = { email, password };
 
         if (!validator.isEmail(email)) {
-            showError("Please enter a valid email");
-            return;
-        }
-        if (password.length < 8) {
-            showError("Password must be at least 8 characters long");
-            return;
-        }
-        if (isSignUp && !nameRegex.test(name)) {
-            showError("Name can only contain letters and spaces");
+            showError("Please enter a valid email address");
             return;
         }
 
         if (isSignUp) {
+            if (!passwordRegex.test(password)) {
+                showError("Password must be at least 8 characters and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character (@$!%*?&#^()_+=-)");
+                return;
+            }
+            if (!nameRegex.test(name)) {
+                showError("Name can only contain letters and spaces");
+                return;
+            }
             payload.name = name;
             payload.role = role;
+        } else {
+            if (password.length < 8) {
+                showError("Password must be at least 8 characters long");
+                return;
+            }
         }
 
         try {
@@ -327,15 +334,28 @@ function Auth({ setIsLoggedIn }) {
                                         <Lock className="w-4 h-4" />
                                     </div>
                                     <input
-                                        type="password"
-                                        placeholder="At least 8 characters"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder={isSignUp ? "Create strong password" : "••••••••"}
                                         name="password"
                                         value={userData.password}
                                         onChange={handleChange}
                                         required
-                                        className="w-full pl-9 pr-4 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm transition-all duration-200 outline-none"
+                                        className="w-full pl-9 pr-10 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm transition-all duration-200 outline-none"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                                        title={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
                                 </div>
+                                {isSignUp && (
+                                    <p className="text-[10px] text-slate-500 pt-0.5">
+                                        Must contain 8+ chars, uppercase, lowercase, number, and special character.
+                                    </p>
+                                )}
                             </div>
 
                             {isSignUp && (

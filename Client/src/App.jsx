@@ -20,10 +20,30 @@ function App() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-    setLoading(false)
-  }, []);
+    const checkToken = () => {
+      const currentToken = localStorage.getItem("token");
+      setIsLoggedIn(!!currentToken);
+      setLoading(false);
+    };
+
+    checkToken();
+
+    // Multi-tab synchronization: Automatically sync login/logout state across browser tabs
+    const handleStorageChange = (e) => {
+      if (e.key === "token" || e.key === "logout-event" || e.key === null) {
+        const currentToken = localStorage.getItem("token");
+        if (!currentToken) {
+          setIsLoggedIn(false);
+          navigate("/auth");
+        } else {
+          setIsLoggedIn(true);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [navigate]);
 
 
   // Protect routes
