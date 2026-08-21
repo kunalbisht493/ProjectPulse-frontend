@@ -11,9 +11,12 @@ COPY package*.json ./
 # Install all dependencies (including devDependencies needed for build)
 RUN npm ci || npm install
 
-# Pass build-time environment variable for backend API URL
+# Pass build-time environment variable for backend API URL and Google OAuth
 ARG VITE_API_URL=http://localhost:4001
 ENV VITE_API_URL=$VITE_API_URL
+
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # Copy source code
 COPY . .
