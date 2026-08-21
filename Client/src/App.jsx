@@ -10,7 +10,6 @@ import TrashProject from './Pages/TrashProject';
 import Task from './Pages/Task'
 import Notification from './Pages/Notification';
 import { ToastContainer } from 'react-toastify';
-import VerifyEmail from './Components/VerifyEmail';
 
 
 function App() {
@@ -46,7 +45,6 @@ function App() {
           <Routes>
             {/* Public route */}
             <Route path="/auth" element={<Auth setIsLoggedIn={setIsLoggedIn} />} />
-            <Route path="/verify-email" element={<VerifyEmail></VerifyEmail>} />
 
             {/* Private routes */}
             <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />

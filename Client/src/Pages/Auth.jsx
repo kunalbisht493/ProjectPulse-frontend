@@ -56,10 +56,9 @@ function Auth({ setIsLoggedIn }) {
             });
 
             if (isSignUp) {
-                showSuccess(res.data.message);
+                showSuccess(res.data?.message || "Account created successfully! Please sign in.");
                 setLoading(false);
-                // Navigate to verify email page with email as state
-                navigate("/verify-email", { state: { email: email } });
+                setIsSignUp(false);
                 setUserData({ name: "", email: "", password: "", role: "" });
             } else {
                 const userRole = res.data.user.role;
@@ -89,15 +88,8 @@ function Auth({ setIsLoggedIn }) {
                 setLoading(false)
                 navigate('/auth')
             }
-            if (errorMessage === "Email not verified. Please verify your email to log in.") {
-                showError("Please verify your email before logging in.");
-                navigate("/verify-email", { state: { email: email } });
-            } else {
-                showError(errorMessage);
-                setLoading(false);
-            }
-
-
+            showError(errorMessage);
+            setLoading(false);
         }
     };
 
