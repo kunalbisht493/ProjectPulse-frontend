@@ -1,12 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../Context/AppContext";
-import { Plus, Calendar, User, BarChart3, Target, TrendingUp, CheckCircle } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { Plus, Calendar, User, BarChart3, Target, CheckCircle2, Clock, FolderKanban, ArrowLeft } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { showError } from "../Utils/Toast";
 import CreateTask from "./CreateTask";
 import TaskCard from "../Components/TaskCard";
 import SortableTaskCard from "../Components/SortableTaskCard";
+import Loader from "../Components/Loader";
 import {
     DndContext,
     closestCenter,
@@ -26,43 +27,45 @@ import {
 } from '@dnd-kit/sortable';
 
 // Optimized Droppable Column Component
-function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient, headerGradient, borderColor, onAddTask, setTasks }) {
+function DroppableColumn({ id, title, status, tasks, color, dotColor, badgeBg, onAddTask, setTasks, userRole }) {
     const { isOver, setNodeRef } = useDroppable({
         id: status,
     });
 
     return (
         <div
-            className={`${bgGradient} rounded-2xl border ${borderColor} overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 ${isOver ? 'ring-2 ring-blue-400/40' : ''}`}
-            style={{
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                willChange: isOver ? 'transform' : 'auto'
-            }}
+            className={`bg-slate-100/75 backdrop-blur-md rounded-2xl border border-slate-200/80 flex flex-col transition-all duration-200 ${
+                isOver ? 'ring-2 ring-indigo-400 bg-indigo-50/40 border-indigo-300' : ''
+            }`}
         >
-            <div className={`${headerGradient} p-4 border-b ${borderColor.replace('border-', 'border-b-')} relative`}>
-                <h3 className={`font-semibold ${color} flex items-center justify-between`}>
-                    <span className="flex items-center gap-3">
-                        <div className={`w-3 h-3 ${dotColor} rounded-full shadow-sm ${status === 'inprogress' ? 'animate-pulse' : ''} relative`}>
-                            {status === 'inprogress' && (
-                                <div className={`absolute inset-0 ${dotColor} rounded-full animate-ping opacity-40`}></div>
-                            )}
-                        </div>
-                        {title}
-                    </span>
-                    <span className={`${color.includes('slate') ? 'bg-slate-200/90 text-slate-700' :
-                        color.includes('blue') ? 'bg-blue-200/90 text-blue-700' :
-                            'bg-emerald-200/90 text-emerald-700'
-                        } text-xs px-3 py-1.5 rounded-full font-medium shadow-sm border border-white/20`}>
+            {/* Column Header */}
+            <div className="p-4 border-b border-slate-200/70 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${dotColor} ${status === 'inprogress' ? 'animate-pulse' : ''}`}></span>
+                    <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${badgeBg}`}>
                         {tasks.length}
                     </span>
-                </h3>
+                </div>
+
+                {(userRole === 'manager' || userRole === 'admin') && (
+                    <button
+                        onClick={onAddTask}
+                        className="w-7 h-7 rounded-lg bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200/70 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                        title={`Add task to ${title}`}
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
+            {/* Droppable Area */}
             <SortableContext items={tasks.map(task => task._id)} strategy={verticalListSortingStrategy}>
                 <div
                     ref={setNodeRef}
-                    className={`p-4 space-y-3 min-h-[420px] transition-colors duration-200 ${isOver ? 'bg-blue-50/30' : ''}`}
+                    className={`p-3 space-y-2.5 min-h-[420px] flex-1 flex flex-col transition-colors duration-200 ${
+                        isOver ? 'bg-indigo-50/20' : ''
+                    }`}
                     data-status={status}
                 >
                     {tasks.map(task => (
@@ -70,26 +73,15 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
                     ))}
 
                     {tasks.length === 0 && (
-                        <div className={`flex flex-col items-center justify-center py-16 ${color.includes('slate') ? 'text-slate-400' :
-                            color.includes('blue') ? 'text-blue-400' :
-                                'text-emerald-400'
-                            } text-sm transition-all duration-200 ${isOver ? 'text-blue-600 scale-105' : ''}`}>
-                            <div className="text-center">
-                                <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${color.includes('slate') ? 'bg-slate-100' :
-                                    color.includes('blue') ? 'bg-blue-100' :
-                                        'bg-emerald-100'
-                                    } transition-transform duration-200 ${isOver ? 'scale-110' : ''}`}>
-                                    <Plus size={20} className={`${color.includes('slate') ? 'text-slate-400' :
-                                        color.includes('blue') ? 'text-blue-400' :
-                                            'text-emerald-400'
-                                        } transition-colors duration-200 ${isOver ? 'text-blue-600' : ''}`} />
-                                </div>
-                                <div className="font-medium">
-                                    {status === 'todo' ? 'Drop tasks here or click "Add New Task"' :
-                                        status === 'inprogress' ? 'Drag tasks here to start working' :
-                                            'Drag completed tasks here'}
-                                </div>
-                            </div>
+                        <div className={`flex-1 flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-xl ${
+                            isOver ? 'border-indigo-400 bg-indigo-50/40 text-indigo-600' : 'border-slate-300/80 text-slate-400'
+                        } text-xs text-center transition-all duration-200`}>
+                            <p className="font-medium">
+                                {status === 'todo' ? 'No tasks yet' :
+                                    status === 'inprogress' ? 'No tasks in progress' :
+                                        'No completed tasks'}
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">Drag tasks here</p>
                         </div>
                     )}
                 </div>
@@ -101,6 +93,7 @@ function DroppableColumn({ id, title, status, tasks, color, dotColor, bgGradient
 function Task() {
     const { projectDetails, currentProject, setProjectDetails, setCurrentProject, taskChanged, setTaskChanged, showCreateTask, setShowCreateTask, setTaskColumn } = useContext(AppContext);
     const { projectId } = useParams();
+    const navigate = useNavigate();
     const [tasks, setTasks] = useState([]);
     const [activeId, setActiveId] = useState(null);
     const [userRole, setUserRole] = useState(null);
@@ -131,9 +124,9 @@ function Task() {
                 });
                 setUserRole(res.data.user.role);
             } catch (error) {
-                console.error("Failed to fetch user role:", error)
+                console.error("Failed to fetch user role:", error);
             }
-        }
+        };
         if (token) {
             fetchUserRole();
         }
@@ -171,7 +164,7 @@ function Task() {
                 const res = await axios.get(`${baseUrl}/api/v1/project/task/${projectId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setTasks(res.data.tasks);
+                setTasks(res.data.tasks || []);
             } catch (err) {
                 showError(err.response?.data?.message || "Something went wrong");
             }
@@ -200,7 +193,6 @@ function Task() {
 
     const handleDragOver = async (event) => {
         const { active, over } = event;
-
         if (!over) return;
 
         const activeId = active.id;
@@ -294,14 +286,7 @@ function Task() {
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     if (!currentProject) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-                    <p className="text-gray-600 font-medium">Loading project details...</p>
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     return (
@@ -312,187 +297,144 @@ function Task() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="h-screen pt-20 bg-gradient-to-br overflow-y-auto scroll-smooth hide-scrollbar from-slate-50 via-blue-50/30 to-indigo-50/30 relative">
-                {/* Simplified Background Elements - Fixed positioning */}
-                <div className="fixed inset-0 pointer-events-none opacity-60">
-                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/15 to-indigo-200/10 rounded-full blur-3xl"></div>
-                    <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-indigo-200/10 to-purple-200/8 rounded-full blur-3xl"></div>
+            <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+                {/* Project Header Banner */}
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
+                    {/* Top Row: Back button, Name, Actions */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <button
+                                onClick={() => navigate('/project')}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors mb-1 cursor-pointer"
+                            >
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <span>Back to Projects</span>
+                            </button>
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                {currentProject.name}
+                            </h1>
+                            {currentProject.description && (
+                                <p className="text-slate-500 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                                    {currentProject.description}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Project Manager and Deadline Pills */}
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200/70 text-xs font-medium">
+                                <Clock className="w-4 h-4 text-indigo-500" />
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block uppercase leading-none">Deadline</span>
+                                    <span className="font-semibold text-slate-800">
+                                        {new Date(currentProject.deadline).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200/70 text-xs font-medium">
+                                <User className="w-4 h-4 text-emerald-500" />
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block uppercase leading-none">Manager</span>
+                                    <span className="font-semibold text-slate-800">
+                                        {currentProject.ProjectManager?.name || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar & KPI metrics */}
+                    <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                            <span className="text-xs text-slate-400 font-medium block">Total Tasks</span>
+                            <span className="text-lg sm:text-xl font-bold text-slate-800">{totalTasks}</span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                            <span className="text-xs text-slate-400 font-medium block">To Do</span>
+                            <span className="text-lg sm:text-xl font-bold text-slate-700">{todoTasks}</span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-center">
+                            <span className="text-xs text-blue-500 font-medium block">In Progress</span>
+                            <span className="text-lg sm:text-xl font-bold text-blue-700">{inProgressTasks}</span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-100 text-center">
+                            <span className="text-xs text-emerald-500 font-medium block">Completed</span>
+                            <span className="text-lg sm:text-xl font-bold text-emerald-700">{completedTasks}</span>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-semibold text-slate-600">
+                            <span>Project Completion</span>
+                            <span className="text-indigo-600">{completionRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div
+                                className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${completionRate}%` }}
+                            ></div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="relative z-10 p-6">
-                    {/* Optimized Header */}
-                    <div className="mb-8">
-                        <div className="mb-6">
-                            <div className="bg-white/80 rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-shadow duration-200 relative overflow-hidden">
-                                <div className="relative z-10">
-                                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                                        {currentProject.name}
-                                    </h1>
-                                    <p className="text-gray-600 mb-4 text-lg">
-                                        {currentProject.description || "No description available"}
-                                    </p>
-                                    <div className="flex items-center gap-6 text-sm flex-wrap">
-                                        <div className="flex items-center gap-3 bg-white/90 rounded-xl px-5 py-3 border border-blue-100/50 shadow-sm hover:shadow-md transition-shadow duration-150">
-                                            <div className="p-1.5 bg-blue-100 rounded-lg">
-                                                <Calendar size={16} className="text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <span className="text-slate-500 block text-xs">Deadline</span>
-                                                <span className="font-semibold text-blue-700 text-sm">
-                                                    {new Date(currentProject.deadline).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 bg-white/90 rounded-xl px-5 py-3 border border-emerald-100/50 shadow-sm hover:shadow-md transition-shadow duration-150">
-                                            <div className="p-1.5 bg-emerald-100 rounded-lg">
-                                                <User size={16} className="text-emerald-600" />
-                                            </div>
-                                            <div>
-                                                <span className="text-slate-500 block text-xs">Manager</span>
-                                                <span className="font-semibold text-emerald-700 text-sm">
-                                                    {currentProject.ProjectManager?.name || 'N/A'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Task Statistics Section */}
-                    <div className="mb-8">
-                        <div className="bg-white/80 rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-shadow duration-200">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl">
-                                    <BarChart3 size={20} className="text-white" />
-                                </div>
-                                <h2 className="text-xl font-bold text-gray-800">Task Overview</h2>
-                            </div>
-                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                                {/* Total Tasks */}
-                                <div className="bg-gradient-to-br from-slate-50/80 to-gray-50/80 rounded-xl p-4 border border-slate-200/60 text-center">
-                                    <div className="flex items-center justify-center mb-2">
-                                        <div className="p-2 bg-slate-100 rounded-lg">
-                                            <Target size={16} className="text-slate-600" />
-                                        </div>
-                                    </div>
-                                    <div className="text-2xl font-bold text-slate-700 mb-1">{totalTasks}</div>
-                                    <div className="text-xs text-gray-600 font-medium">Total Tasks</div>
-                                </div>
-
-                                {/* Todo Tasks */}
-                                <div className="bg-gradient-to-br from-slate-50/80 to-gray-50/80 rounded-xl p-4 border border-slate-200/60 text-center">
-                                    <div className="flex items-center justify-center mb-2">
-                                        <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
-                                    </div>
-                                    <div className="text-2xl font-bold text-slate-700 mb-1">{todoTasks}</div>
-                                    <div className="text-xs text-gray-600 font-medium">Todo</div>
-                                </div>
-
-                                {/* In Progress Tasks */}
-                                <div className="bg-gradient-to-br from-blue-50/80 to-cyan-50/80 rounded-xl p-4 border border-blue-200/60 text-center">
-                                    <div className="flex items-center justify-center mb-2">
-                                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                                    </div>
-                                    <div className="text-2xl font-bold text-blue-700 mb-1">{inProgressTasks}</div>
-                                    <div className="text-xs text-gray-600 font-medium">In Progress</div>
-                                </div>
-
-                                {/* Completed Tasks */}
-                                <div className="bg-gradient-to-br from-emerald-50/80 to-green-50/80 rounded-xl p-4 border border-emerald-200/60 text-center">
-                                    <div className="flex items-center justify-center mb-2">
-                                        <div className="p-2 bg-emerald-100 rounded-lg">
-                                            <CheckCircle size={16} className="text-emerald-600" />
-                                        </div>
-                                    </div>
-                                    <div className="text-2xl font-bold text-emerald-700 mb-1">{completedTasks}</div>
-                                    <div className="text-xs text-gray-600 font-medium">Completed</div>
-                                </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div className="mt-6">
-                                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                                    <span>Project Progress</span>
-                                    <span>{completionRate}% Complete</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                    <div
-                                        className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all duration-700"
-                                        style={{ width: `${completionRate}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Optimized Add Task Button */}
-                    {(userRole == 'manager' || userRole == 'admin') && <div className="mb-8 flex justify-start">
+                {/* Add Task Button for Managers/Admins */}
+                {(userRole === 'manager' || userRole === 'admin') && (
+                    <div className="flex justify-end">
                         <button
                             onClick={() => handleCreateTask('todo')}
-                            className="bg-white/90 hover:bg-white border border-slate-200/60 hover:border-slate-300/80 rounded-xl px-6 py-4 transition-all duration-150 shadow-lg hover:shadow-xl relative overflow-hidden"
+                            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer"
                         >
-                            <div className="flex items-center gap-3 text-slate-600 hover:text-slate-800">
-                                <div className="bg-slate-100 hover:bg-slate-200 rounded-xl p-2 transition-colors duration-150 shadow-sm">
-                                    <Plus size={18} />
-                                </div>
-                                <span className="text-sm font-semibold">Add New Task</span>
-                            </div>
+                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                            <span>Add New Task</span>
                         </button>
-                    </div>}
-
-                    {/* Optimized Kanban Board */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <DroppableColumn
-                            id="todo"
-                            title="Todo"
-                            status="todo"
-                            tasks={getTasksByStatus('todo')}
-                            color="text-slate-800"
-                            dotColor="bg-slate-500"
-                            bgGradient="bg-white/80"
-                            headerGradient="bg-slate-50/80"
-                            borderColor="border-slate-200/60"
-                            setTasks={setTasks}
-                            onAddTask={() => handleCreateTask('todo')}
-                        />
-
-                        <DroppableColumn
-                            id="inprogress"
-                            title="In Progress"
-                            status="inprogress"
-                            tasks={getTasksByStatus('inprogress')}
-                            color="text-blue-900"
-                            dotColor="bg-blue-500"
-                            bgGradient="bg-white/80"
-                            headerGradient="bg-blue-50/80"
-                            borderColor="border-blue-200/60"
-                            setTasks={setTasks}
-                            onAddTask={() => handleCreateTask('inprogress')}
-                        />
-
-                        <DroppableColumn
-                            id="completed"
-                            title="Completed"
-                            status="completed"
-                            tasks={getTasksByStatus('completed')}
-                            color="text-emerald-900"
-                            dotColor="bg-emerald-500"
-                            bgGradient="bg-white/80"
-                            headerGradient="bg-emerald-50/80"
-                            borderColor="border-emerald-200/60"
-                            setTasks={setTasks}
-                            onAddTask={() => handleCreateTask('completed')}
-                        />
                     </div>
+                )}
+
+                {/* Kanban Board Columns */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <DroppableColumn
+                        id="todo"
+                        title="To Do"
+                        status="todo"
+                        tasks={getTasksByStatus('todo')}
+                        dotColor="bg-slate-400"
+                        badgeBg="bg-slate-200 text-slate-700"
+                        setTasks={setTasks}
+                        userRole={userRole}
+                        onAddTask={() => handleCreateTask('todo')}
+                    />
+
+                    <DroppableColumn
+                        id="inprogress"
+                        title="In Progress"
+                        status="inprogress"
+                        tasks={getTasksByStatus('inprogress')}
+                        dotColor="bg-blue-500"
+                        badgeBg="bg-blue-100 text-blue-700"
+                        setTasks={setTasks}
+                        userRole={userRole}
+                        onAddTask={() => handleCreateTask('inprogress')}
+                    />
+
+                    <DroppableColumn
+                        id="completed"
+                        title="Completed"
+                        status="completed"
+                        tasks={getTasksByStatus('completed')}
+                        dotColor="bg-emerald-500"
+                        badgeBg="bg-emerald-100 text-emerald-700"
+                        setTasks={setTasks}
+                        userRole={userRole}
+                        onAddTask={() => handleCreateTask('completed')}
+                    />
                 </div>
 
                 {/* Create Task Modal */}
                 {showCreateTask && <CreateTask />}
 
-                {/* Optimized Drag Overlay */}
+                {/* Drag Overlay for smooth dragging preview */}
                 <DragOverlay>
                     {activeTask ? (
                         <div className="opacity-95 transform rotate-2 scale-105 shadow-2xl">

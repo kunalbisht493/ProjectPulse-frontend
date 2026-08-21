@@ -1,11 +1,13 @@
 export default function Loader() {
     return (
-        <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-                <p className="text-gray-600 font-medium">Loading ...</p>
+        <div className="w-full h-full min-h-[60vh] flex items-center justify-center p-8">
+            <div className="flex flex-col items-center gap-3.5">
+                <div className="relative flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full border-3 border-indigo-100 border-t-indigo-600 animate-spin"></div>
+                    <div className="w-4 h-4 rounded-full bg-indigo-600/20 absolute animate-ping"></div>
+                </div>
+                <p className="text-slate-500 font-medium text-xs tracking-wider uppercase animate-pulse">Loading Workspace...</p>
             </div>
         </div>
-    )
-
+    );
 }

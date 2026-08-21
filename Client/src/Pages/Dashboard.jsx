@@ -4,23 +4,21 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
 } from 'recharts';
 import {
-  Users, FolderOpen, CheckCircle, Clock, AlertTriangle,
-  TrendingUp, Calendar, User, Settings, Bell, Search,
-  Filter, Download, Eye, Edit, Trash2, Plus, Target, BarChart3,
-  Activity, Award, Briefcase
+  Users, FolderKanban, CheckCircle2, Clock, AlertCircle,
+  TrendingUp, Calendar, User, Search, Filter,
+  Trash2, Plus, Target, BarChart3, Activity, Award,
+  Briefcase, ArrowUpRight, ShieldCheck, Sparkles, Layers
 } from 'lucide-react';
 import axios from 'axios';
 import { AppContext } from '../Context/AppContext';
 import { showError, showSuccess } from '../Utils/Toast';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import Loader from '../Components/Loader';
 
 const Dashboard = () => {
-  // Get data from your existing context
   const { projectDetails, setProjectDetails, currentUser, setCurrentUser } = useContext(AppContext);
   const baseUrl = import.meta.env.VITE_API_URL;
 
-  // State management
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,12 +37,10 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("token");
 
-  // 1. Fetch current user on mount
   useEffect(() => {
     fetchCurrentUser();
   }, []);
 
-  // 2. Fetch dashboard data once currentUser is available
   useEffect(() => {
     if (currentUser) {
       fetchDashboardData();
@@ -58,12 +54,11 @@ const Dashboard = () => {
       });
       setCurrentUser(response.data.user);
     } catch (error) {
-      // If endpoint doesn't exist, create a mock user
       setCurrentUser({
         id: '1',
         name: 'Current User',
         email: 'user@example.com',
-        role: 'admin' // or 'user'
+        role: 'admin'
       });
     }
   };
@@ -72,7 +67,6 @@ const Dashboard = () => {
     try {
       setLoading(true);
 
-      // Use existing projects from context if available, otherwise fetch
       let userProjects = projectDetails;
 
       if (!projectDetails || projectDetails.length === 0) {
@@ -83,9 +77,7 @@ const Dashboard = () => {
         setProjectDetails(userProjects);
       }
 
-      // Filter projects based on user role
       if (currentUser?.role !== 'admin') {
-        // For regular users, show only projects they're assigned to or managing
         userProjects = userProjects.filter(project =>
           project.assignedUsers?.includes(currentUser?.id) ||
           project.ProjectManager?.id === currentUser?.id ||
@@ -93,21 +85,17 @@ const Dashboard = () => {
         );
       }
 
-      // Fetch users (admin only)
       if (currentUser?.role === 'admin') {
         try {
           const usersRes = await axios.get(`${baseUrl}/api/v1/user/search`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUsers(usersRes.data.users || []);
-          console.log("Fetched users:", usersRes.data.users);
         } catch (error) {
-          // Handle case where endpoint doesn't exist yet
           console.log("Users endpoint not available");
         }
       }
 
-      // Fetch all tasks for visible projects
       const allTasks = [];
       for (const project of userProjects) {
         try {
@@ -124,8 +112,6 @@ const Dashboard = () => {
         }
       }
       setTasks(allTasks);
-
-      // Calculate statistics
       calculateStats(userProjects, allTasks);
 
     } catch (error) {
@@ -135,23 +121,27 @@ const Dashboard = () => {
     }
   };
 
-  // DELETE USER FROM DATABASE
   const handleDelete = async (e, usersId) => {
     e.preventDefault();
     try {
-      setLoading(true)
+      setLoading(true);
       const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-      if (!confirmDelete) return;
+      if (!confirmDelete) {
+        setLoading(false);
+        return;
+      }
 
-      axios.delete(`${baseUrl}/api/v1/user/delete/${usersId}`, {
+      await axios.delete(`${baseUrl}/api/v1/user/delete/${usersId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDeletingUserId(usersId);
       setUsers(prevUsers => prevUsers.filter(user => user._id !== usersId && user.id !== usersId));
-      setLoading(false)
+      showSuccess("User deleted successfully");
+      setLoading(false);
     } catch (error) {
       console.error("Error deleting user:", error);
       showError("Failed to delete user");
+      setLoading(false);
     }
   };
 
@@ -183,7 +173,6 @@ const Dashboard = () => {
     });
   };
 
-  // Get projects visible to current user - MEMOIZED
   const visibleProjects = useMemo(() => {
     if (!currentUser || !projectDetails) return [];
 
@@ -191,7 +180,6 @@ const Dashboard = () => {
       return projectDetails;
     }
 
-    // For regular users, show only projects they're assigned to or managing
     return projectDetails.filter(project =>
       project.assignedUsers?.includes(currentUser.id) ||
       project.ProjectManager?.id === currentUser.id ||
@@ -199,10 +187,9 @@ const Dashboard = () => {
     );
   }, [currentUser, projectDetails]);
 
-  // Chart data calculations - MEMOIZED
   const projectStatusData = useMemo(() => {
     return [
-      { name: 'In Progress', value: visibleProjects.filter(p => p.status === 'inprogress').length, color: '#3b82f6' },
+      { name: 'In Progress', value: visibleProjects.filter(p => p.status === 'inprogress').length, color: '#6366f1' },
       { name: 'Completed', value: visibleProjects.filter(p => p.status === 'completed').length, color: '#10b981' }
     ];
   }, [visibleProjects]);
@@ -218,38 +205,27 @@ const Dashboard = () => {
     });
   }, [visibleProjects, tasks]);
 
-  // Recalculate stats whenever projects or tasks change
   useEffect(() => {
     if (visibleProjects.length > 0 || tasks.length > 0) {
       calculateStats(visibleProjects, tasks);
     }
   }, [visibleProjects, tasks]);
 
-  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
-    <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-3 sm:mb-4">
-          <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${color.replace('from-', 'bg-').replace('-500', '-100').replace(' to-', ' text-').replace('-600', '-600')}`}>
-            <Icon size={18} className="sm:w-6 sm:h-6" />
-          </div>
-          {trend && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              <TrendingUp size={10} className={`sm:w-3 sm:h-3 ${trend < 0 ? 'rotate-180' : ''}`} />
-              {Math.abs(trend)}%
-            </div>
-          )}
+  const StatCard = ({ icon: Icon, title, value, subtitle, color, bgLight }) => (
+    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 group">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-10 h-10 rounded-xl ${bgLight} flex items-center justify-center ${color} group-hover:scale-105 transition-transform duration-200`}>
+          <Icon className="w-5 h-5" />
         </div>
-        <div className="space-y-1">
-          <p className="text-xl sm:text-2xl font-bold text-gray-800">{value}</p>
-          <p className="text-xs sm:text-sm font-medium text-gray-600">{title}</p>
-          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
-        </div>
+      </div>
+      <div className="space-y-0.5">
+        <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">{value}</h3>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+        {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
       </div>
     </div>
   );
 
-  // Project Card Component - MEMOIZED calculations
   const ProjectCard = ({ project }) => {
     const projectTasks = useMemo(() =>
       tasks.filter(task => task.projectId === project._id),
@@ -261,64 +237,63 @@ const Dashboard = () => {
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const isOverdue = new Date(project.deadline) < new Date() && project.status !== 'completed';
 
-    const getStatusColor = (status) => {
+    const getStatusStyle = (status) => {
       switch (status) {
-        case 'completed': return 'bg-green-100 text-green-700 border-green-200';
-        case 'inprogress': return 'bg-blue-100 text-blue-700 border-blue-200';
-        case 'todo': return 'bg-gray-100 text-gray-700 border-gray-200';
-        default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+        case 'inprogress': return 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
+        default: return 'bg-slate-100 text-slate-700 border-slate-200';
       }
     };
 
     return (
-      <NavLink to={`/task/${project._id}`} className="bg-white/70 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group block">
-        <div className="flex items-start justify-between mb-3 sm:mb-4">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-2">
+      <NavLink
+        to={`/task/${project._id}`}
+        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-200 transition-all duration-200 group block"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors text-sm sm:text-base truncate">
               {project.name}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
+            <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
               {project.description || "No description available"}
             </p>
           </div>
           {isOverdue && (
-            <div className="bg-red-100 text-red-600 p-1.5 sm:p-2 rounded-lg flex-shrink-0 ml-2">
-              <AlertTriangle size={14} className="sm:w-4 sm:h-4" />
-            </div>
+            <span className="p-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 shrink-0" title="Project is Overdue">
+              <AlertCircle className="w-4 h-4" />
+            </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
-            {project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Unknown'}
+        <div className="flex items-center gap-2 mb-4">
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusStyle(project.status)}`}>
+            {project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Active'}
           </span>
         </div>
 
-        <div className="mb-3 sm:mb-4">
-          <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-2">
+        {/* Progress Bar */}
+        <div className="space-y-1.5 mb-4">
+          <div className="flex justify-between text-xs font-semibold text-slate-600">
             <span>Progress</span>
-            <span>{Math.round(progress)}%</span>
+            <span className="text-indigo-600">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs sm:text-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <span className="text-gray-600 flex items-center gap-1">
-              📅 {new Date(project.deadline).toLocaleDateString()}
-            </span>
-            <span className="text-gray-600 flex items-center gap-1">
-              👤 {project.ProjectManager?.name || 'N/A'}
-            </span>
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+          <div className="flex items-center gap-1.5 truncate">
+            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{project.ProjectManager?.name || 'Unassigned'}</span>
           </div>
-          <div className="flex items-center gap-1 text-gray-500">
-            <Target size={12} className="sm:w-3.5 sm:h-3.5" />
-            <span>{totalTasks} tasks</span>
+          <div className="flex items-center gap-1.5 shrink-0 font-medium">
+            <Clock className="w-3.5 h-3.5 text-indigo-500" />
+            <span>{new Date(project.deadline).toLocaleDateString()}</span>
           </div>
         </div>
       </NavLink>
@@ -326,359 +301,346 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <Loader />
-    );
+    return <Loader />;
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'projects', label: 'Projects' },
+    ...(currentUser?.role === 'admin' ? [
+      { id: 'users', label: 'Team Members' },
+      { id: 'analytics', label: 'Analytics' }
+    ] : [])
+  ];
+
   return (
-    <div className="min-h-screen pt-16 sm:pt-20 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="fixed inset-0 pointer-events-none opacity-60">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/15 to-indigo-200/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-indigo-200/10 to-purple-200/8 rounded-full blur-3xl"></div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 p-3 sm:p-6">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 sm:mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                {currentUser?.role === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
-              </h1>
-              <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
-                Welcome back, {currentUser?.name || 'User'}! Here's your project overview.
-              </p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header Banner */}
+      <div className="bg-white/80 backdrop-blur-md p-5 sm:p-7 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Activity className="w-4 h-4" />
             </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              {currentUser?.role === 'admin' ? 'Executive Dashboard' : 'Workspace Overview'}
+            </h1>
           </div>
-
-          {/* Navigation Tabs */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 border border-white/20 flex overflow-x-auto">
-            {['overview', 'projects', ...(currentUser?.role === 'admin' ? ['users', 'analytics'] : [])].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium transition-all duration-200 capitalize whitespace-nowrap text-sm sm:text-base ${activeTab === tab
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50/50'
-                  }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            Welcome back, <span className="font-semibold text-slate-700">{currentUser?.name || 'User'}</span>! Here is your latest project pulse.
+          </p>
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6 sm:space-y-8">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-              <StatCard
-                icon={Briefcase}
-                title="Total Projects"
-                value={stats.totalProjects}
-                subtitle={`${stats.activeProjects} active`}
-                color="from-blue-500 to-blue-600"
-              />
-              <StatCard
-                icon={Activity}
-                title="Active Tasks"
-                value={stats.inProgressTasks}
-                subtitle={`${stats.totalTasks} total tasks`}
-                color="from-indigo-500 to-indigo-600"
-              />
-              <StatCard
-                icon={CheckCircle}
-                title="Completion Rate"
-                value={`${stats.completionRate}%`}
-                subtitle={`${stats.completedTasks} completed`}
-                color="from-green-500 to-green-600"
-              />
-              <StatCard
-                icon={AlertTriangle}
-                title="Overdue"
-                value={stats.overdueTasks}
-                subtitle="Projects past deadline"
-                color="from-red-500 to-red-600"
-              />
-            </div>
+        {/* Tab Navigation Pills */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap cursor-pointer ${
+                activeTab === tab.id
+                  ? 'bg-white text-indigo-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              {/* Project Status Chart */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Project Status</h3>
-                <ResponsiveContainer width="100%" height={250}>
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Stats KPI Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={Briefcase}
+              title="Total Projects"
+              value={stats.totalProjects}
+              subtitle={`${stats.activeProjects} actively in progress`}
+              color="text-indigo-600"
+              bgLight="bg-indigo-50"
+            />
+            <StatCard
+              icon={Layers}
+              title="Active Tasks"
+              value={stats.inProgressTasks}
+              subtitle={`${stats.totalTasks} total tasks logged`}
+              color="text-blue-600"
+              bgLight="bg-blue-50"
+            />
+            <StatCard
+              icon={CheckCircle2}
+              title="Completion Rate"
+              value={`${stats.completionRate}%`}
+              subtitle={`${stats.completedTasks} completed deliverables`}
+              color="text-emerald-600"
+              bgLight="bg-emerald-50"
+            />
+            <StatCard
+              icon={AlertCircle}
+              title="Overdue"
+              value={stats.overdueTasks}
+              subtitle="Requires immediate review"
+              color="text-rose-600"
+              bgLight="bg-rose-50"
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Project Status Pie */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <FolderKanban className="w-4 h-4 text-indigo-600" />
+                <span>Project Status Breakdown</span>
+              </h3>
+              <div className="h-64 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={projectStatusData}
                       cx="50%"
                       cy="50%"
+                      innerRadius={50}
                       outerRadius={80}
+                      paddingAngle={5}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
                     >
                       {projectStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                        fontSize: '12px'
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+            </div>
 
-              {/* Task Progress Chart */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Task Progress by Project</h3>
-                <ResponsiveContainer width="100%" height={250}>
+            {/* Task Progress Bar Chart */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-indigo-600" />
+                <span>Task Distribution by Project</span>
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={taskProgressData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Bar dataKey="todo" stackId="a" fill="#64748b" name="To Do" />
-                    <Bar dataKey="inprogress" stackId="a" fill="#3b82f6" name="In Progress" />
-                    <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Bar dataKey="inprogress" stackId="a" fill="#6366f1" name="In Progress" radius={[0, 0, 4, 4]} />
+                    <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
-
-            {/* Recent Projects */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Recent Projects</h3>
-                <button className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm">
-                  View All
-                </button>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {visibleProjects.slice(0, 3).map(project => (
-                  <ProjectCard key={project._id} project={project} />
-                ))}
-              </div>
-            </div>
           </div>
-        )}
 
-        {/* Projects Tab */}
-        {activeTab === 'projects' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">All Projects</h2>
+          {/* Recent Projects */}
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900">Recent Projects</h3>
+              <button
+                onClick={() => setActiveTab('projects')}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer flex items-center gap-1"
+              >
+                <span>View All</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {visibleProjects.map(project => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visibleProjects.slice(0, 3).map(project => (
                 <ProjectCard key={project._id} project={project} />
               ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Users Tab (Admin Only) */}
-        {activeTab === 'users' && currentUser?.role === 'admin' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3 mb-4">
-               Users Management
-              </h2>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-white/20">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px]">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Name</th>
-                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Email</th>
-                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Role</th>
-                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Projects</th>
-                      <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(user => {
-                      const isCurrentUser = user._id === currentUser?._id || user.id === currentUser?.id;
-                      const isDeleting = deletingUserId === user._id || deletingUserId === user.id;
-
-                      return (
-                        <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                          <td className="py-3 sm:py-4 px-2 sm:px-4">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="font-medium text-blue-600 text-sm sm:text-base">
-                                  {user.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="min-w-0">
-                                <span className="font-medium text-gray-800 text-sm sm:text-base block truncate">{user.name}</span>
-                                {isCurrentUser && (
-                                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-600 text-sm sm:text-base">
-                            <div className="truncate max-w-[150px] sm:max-w-none">{user.email}</div>
-                          </td>
-                          <td className="py-3 sm:py-4 px-2 sm:px-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin'
-                              ? 'bg-purple-100 text-purple-700'
-                              : user.role === 'manager'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-700'
-                              }`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-600 text-sm sm:text-base">{user.projectsCount || 0}</td>
-                          <td className="py-3 sm:py-4 px-2 sm:px-4">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <button className="p-1.5 sm:p-2 hover:bg-yellow-100 rounded-lg transition-colors">
-                                <Edit size={14} className="text-yellow-600 sm:w-4 sm:h-4" />
-                              </button>
-
-                              {user.role != 'admin' && <button className="p-1.5 sm:p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                onClick={(e) => handleDelete(e, user._id || user.id, user.name)}>
-                                <Trash2 size={14} className="text-red-600 sm:w-4 sm:h-4" />
-                              </button>}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      {/* Projects Tab */}
+      {activeTab === 'projects' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900">All Workspace Projects</h2>
+            <span className="text-xs text-slate-500 font-medium">{visibleProjects.length} total</span>
           </div>
-        )}
 
-        {/* Analytics Tab (Admin Only) */}
-        {activeTab === 'analytics' && currentUser?.role === 'admin' && (
-          <div className="space-y-8">
-            {/* Analytics Header */}
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3 mb-4">
-                Analytics & Insights
-              </h2>
-              <p className="text-gray-600 max-w-xl mx-auto">
-                Deep dive into your team's performance and project metrics
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleProjects.map(project => (
+              <ProjectCard key={project._id} project={project} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Users Tab (Admin Only) */}
+      {activeTab === 'users' && currentUser?.role === 'admin' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-slate-900 text-base">Team Members & Permissions</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Manage user access and assigned roles across the workspace</p>
             </div>
+            <span className="px-2.5 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+              {users.length} Users
+            </span>
+          </div>
 
-            {/* Analytics Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200/60">
+                <tr>
+                  <th className="py-3 px-4">User</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {users.map(user => {
+                  const isCurrentUser = user._id === currentUser?._id || user.id === currentUser?.id;
 
-              {/* Performance Dashboard */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Award size={20} className="text-slate-600" />
-                  Team Performance
-                </h3>
+                  return (
+                    <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold flex items-center justify-center shrink-0">
+                            {user.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-900 block text-sm">{user.name}</span>
+                            {isCurrentUser && (
+                              <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.2 rounded font-bold">
+                                You
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600">{user.email}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                          user.role === 'admin'
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                            : user.role === 'manager'
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {user.role !== 'admin' && (
+                          <button
+                            onClick={(e) => handleDelete(e, user._id || user.id)}
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/60 hover:border-rose-200 transition-all cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-                <div className="space-y-4">
-                  <div className="relative">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-700 font-medium">Completion Rate</span>
-                      <span className="font-bold text-emerald-600">{stats.completionRate}%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${stats.completionRate}%` }}
-                      ></div>
-                    </div>
+      {/* Analytics Tab (Admin Only) */}
+      {activeTab === 'analytics' && currentUser?.role === 'admin' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <span>Performance & Velocity</span>
+              </h3>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                    <span>Task Completion</span>
+                    <span className="text-emerald-600">{stats.completionRate}%</span>
                   </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${stats.completionRate}%` }}
+                    ></div>
+                  </div>
+                </div>
 
-                  <div className="relative">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-700 font-medium">On-Time Delivery</span>
-                      <span className="font-bold text-cyan-600">
-                        {stats.totalProjects > 0 ? Math.round(((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div
-                        className="bg-gradient-to-r from-cyan-500 to-cyan-600 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${stats.totalProjects > 0 ? ((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100 : 0}%` }}
-                      ></div>
-                    </div>
+                <div>
+                  <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                    <span>On-Time Milestone Rate</span>
+                    <span className="text-indigo-600">
+                      {stats.totalProjects > 0 ? Math.round(((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div
+                      className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${stats.totalProjects > 0 ? ((stats.totalProjects - stats.overdueTasks) / stats.totalProjects) * 100 : 0}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Project Timeline */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Clock size={20} className="text-slate-600" />
-                  Project Timeline
-                </h3>
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-600" />
+                <span>Upcoming Milestones</span>
+              </h3>
 
-                <div className="space-y-4">
-                  {visibleProjects.slice(0, 4).map((project, index) => {
-                    const isOverdue = new Date(project.deadline) < new Date() && project.status !== 'completed';
-                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+              <div className="space-y-2">
+                {visibleProjects.slice(0, 4).map((project) => {
+                  const isOverdue = new Date(project.deadline) < new Date() && project.status !== 'completed';
+                  const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
 
-                    return (
-                      <div key={project._id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div className={`w-3 h-3 rounded-full ${project.status === 'completed' ? 'bg-emerald-500' : isOverdue ? 'bg-red-500' : 'bg-cyan-500'}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 truncate">{project.name}</h4>
-                          <p className="text-xs text-gray-600">
-                            {isOverdue ? `${Math.abs(daysLeft)} days overdue` :
-                              project.status === 'completed' ? 'Completed' :
-                                `${daysLeft} days left`}
-                          </p>
-                        </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-lg ${project.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                          isOverdue ? 'bg-red-100 text-red-700' :
-                            'bg-cyan-100 text-cyan-700'
-                          }`}>
-                          {project.status?.toUpperCase() || 'TODO'}
+                  return (
+                    <div key={project._id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                      <div className="min-w-0 pr-3">
+                        <h4 className="font-semibold text-slate-800 truncate">{project.name}</h4>
+                        <span className="text-[11px] text-slate-400">
+                          {isOverdue ? `${Math.abs(daysLeft)} days overdue` : `${daysLeft} days remaining`}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                        isOverdue ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'
+                      }`}>
+                        {new Date(project.deadline).toLocaleDateString()}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            {/* Full Width Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <BarChart3 size={20} className="text-slate-600" />
-                Detailed Task Analysis
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={taskProgressData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Bar dataKey="todo" stackId="a" fill="#64748b" name="To Do" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="inprogress" stackId="a" fill="#0891b2" name="In Progress" />
-                  <Bar dataKey="completed" stackId="a" fill="#059669" name="Completed" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   );
 };
